@@ -93,7 +93,35 @@ namespace MO{
 
         return res;
     }
-    
+
+// TODO: finish this shit.
+    matrixData matrixData::operator*(matrixData& mat){
+        matrixData res(Row, mat.col());
+        for(int i = 0;i < Row;i++){
+            for(int j = 0;j < mat.col();j++){
+                res[i * mat.col() + j] = 0;
+                for(int k = 0;k < mat.row();k++){
+                    
+                }
+            }
+        }
+    }
+
+    void matrixData::transpose(){
+        std::vector<float> new_arr(Row * Col);
+        #pragma omp parallel for
+            for(int i = 0;i < Row * Col;i++){
+                // derive from: offset = (i * C) / (R * C), and the first column of each row = (i * C) % (R * C)
+                new_arr[i] = arr[(i / Row) + ((i * Col) % (Row * Col))];
+            }
+        arr = new_arr;
+
+        // Row and Col swap
+        int tmp = Row;
+        Row = Col;
+        Col = tmp;
+    }
+
     void matrixData::printMat(int precision){
         std::cout << Row << " " << Col << "\n";
         std::cout << std::setprecision(precision) << std::fixed;
@@ -105,4 +133,5 @@ namespace MO{
         }
         std::cout << "\n";
     }
+
 }

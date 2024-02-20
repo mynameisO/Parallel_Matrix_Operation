@@ -34,3 +34,6 @@
 #testing
 dump.cpp
 *.txt
+
+#vscode config
+.vscode/c_cpp_properties.json
