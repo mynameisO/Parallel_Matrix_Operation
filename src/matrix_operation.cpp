@@ -96,12 +96,16 @@ namespace MO{
 
 // TODO: finish this shit.
     matrixData matrixData::operator*(matrixData& mat){
+        if(mat.Row != Col){
+            std::cout << "Number of Col Operand A need to be equal with Number of Row of Operand B.\n";
+        }
+
         matrixData res(Row, mat.col());
         for(int i = 0;i < Row;i++){
             for(int j = 0;j < mat.col();j++){
                 res[i * mat.col() + j] = 0;
                 for(int k = 0;k < mat.row();k++){
-                    
+                    res[i * mat.col() + j] += arr[i * Col + k] * mat[k * Col + j];
                 }
             }
         }
