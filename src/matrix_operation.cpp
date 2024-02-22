@@ -56,12 +56,24 @@ namespace MO{
         }
     }
 
+    matrixData::matrixData(std::vector<float> array, int row, int col):Row(row), Col(col){
+        arr = array;
+    }
+
+    matrixData::matrixData():Row(0), Col(0){}
+
+    void matrixData::reserve(int row, int col){
+        arr.reserve(row * col);
+        Row = row;
+        Col = col;
+    }
+
     float& matrixData::operator[](int index){
         return arr[index];
     }
 
     float& matrixData::operator()(int x, int y){
-        return arr[x * Row + y];
+        return arr[x * Col + y];
     }    
 
     matrixData matrixData::operator+(matrixData& mat){
@@ -94,36 +106,50 @@ namespace MO{
         return res;
     }
 
-// TODO: finish this shit.
     matrixData matrixData::operator*(matrixData& mat){
-        if(mat.Row != Col){
+        if(mat.row() != Col){
+            std::cout << Col << " " << mat.row() << "\n";
             std::cout << "Number of Col Operand A need to be equal with Number of Row of Operand B.\n";
         }
 
         matrixData res(Row, mat.col());
         for(int i = 0;i < Row;i++){
             for(int j = 0;j < mat.col();j++){
-                res[i * mat.col() + j] = 0;
-                for(int k = 0;k < mat.row();k++){
-                    res[i * mat.col() + j] += arr[i * Col + k] * mat[k * Col + j];
-                }
+                float sum = 0;
+                #pragma omp parallel for reduction(+:sum)
+                    for(int k = 0;k < Col;k++){
+                        sum += arr[i * Col + k] * mat[k * mat.col() + j];
+                    }
+                res[i * mat.col() + j] = sum;
             }
         }
+        return res;
     }
 
-    void matrixData::transpose(){
-        std::vector<float> new_arr(Row * Col);
+    bool matrixData::operator==(matrixData& mat){
+        if(mat.row() != Row || mat.col() != Col){
+            return false; 
+        }
+
+        for(int i = 0;i < Row * Col;i++)
+            if((mat[i] - arr[i]) >= 0.005f){ 
+                std::cout << std::setprecision(6) << std::fixed;
+                std::cout << mat[i] << " " << arr[i] << " " << "\n";
+                return false; 
+            }
+        
+        return true;
+    }
+
+    // TODO: inplace is not working. fix it.
+    matrixData matrixData::transpose(bool inplace){
+        matrixData res(Col, Row);
         #pragma omp parallel for
             for(int i = 0;i < Row * Col;i++){
-                // derive from: offset = (i * C) / (R * C), and the first column of each row = (i * C) % (R * C)
-                new_arr[i] = arr[(i / Row) + ((i * Col) % (Row * Col))];
+                // derive from: offset = (i * C) % (R * C), and the column = (i * C) / (R * C)
+                res[i] = arr[(i / Row) + ((i * Col) % (Row * Col))];
             }
-        arr = new_arr;
-
-        // Row and Col swap
-        int tmp = Row;
-        Row = Col;
-        Col = tmp;
+        return res;
     }
 
     void matrixData::printMat(int precision){
